@@ -171,7 +171,7 @@ void SF2::add_new_sample_header(const char *name, int start, int end, int start_
 
 // Add a new sample and create corresponding header
 void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
-				  uint32_t loop_pos, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate)
+				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate)
 {
 	uint32_t dir_offset = sdtalist_chunk->smpl_subchunk.add_sample(file, type, pointer, size, loop_flag, loop_pos);
 	// If the sample is looped const SF2 standard requires we add the 8 bytes
@@ -181,8 +181,8 @@ void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t
 	if (loop_flag)
 	{
 		dir_end = dir_offset + size + 8;
-		dir_loop_end = dir_offset + size;
-		dir_loop_start = dir_offset + loop_pos;
+		dir_loop_end = dir_offset + loop_end;
+		dir_loop_start = dir_offset + loop_start;
 	}
 	else
 	{

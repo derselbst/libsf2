@@ -647,7 +647,7 @@ class SdtaListChunk : public SF2Chunks
 	SMPLSubChunk smpl_subchunk;
 
 	friend void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
-				  uint32_t loop_pos, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
+				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
 public:
 	SdtaListChunk (SF2 *sf2) :
 		SF2Chunks(sf2, "LIST"),

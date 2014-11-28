@@ -61,15 +61,9 @@ public:
 	void add_new_inst_generator(SFGenerator operation, uint16_t value);
 	void add_new_inst_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
 	void add_new_sample_header(const char *name, int start, int end, int start_loop, int end_loop, int sample_rate, int original_pitch, int pitch_correction);
-
+	
 	void add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
-				  uint32_t loop_pos, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
-	// Add new sample using default sample rate
-	inline void add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size,
-					  bool loop_flag, uint32_t loop_pos, uint32_t original_pitch, uint32_t pitch_correction)
-	{
-		add_new_sample(file, type, name, pointer, size, loop_flag, loop_pos, original_pitch, pitch_correction, default_sample_rate);
-	}
+				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
 
 	uint16_t get_ibag_size();
 	uint16_t get_igen_size();
