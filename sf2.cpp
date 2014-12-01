@@ -169,11 +169,27 @@ void SF2::add_new_sample_header(const char *name, int start, int end, int start_
 	pdtalist_chunk->shdr_subchunk.add_sample(sfSample(this, name, start, end, start_loop, end_loop, sample_rate, original_pitch, pitch_correction));
 }
 
-// Add a new sample and create corresponding header
+/*
+ * @brief adds a new sample
+ * 
+ * Add a new sample and create corresponding header
+ * 
+ * @param[in] file: pointer to a file that contains PCM only data
+ * @param[in] type: type of the PCM data
+ * @param[in] name: a unique name (if possible) of length 20 characters
+ * @param[in] pointer: an offset, indicating, at which byte in the file the raw PCM data begins
+ * @param[in] size: number of samples
+ * @param[in] loop_flag: loop points are set if true
+ * @param[in] loop_start: indicates the sample where to start with looping; will be ignored if loop_flag is false
+ * @param[in] loop_end: indicates the sample where to end with looping; will be ignored if loop_flag is false
+ * @param[in] original_pitch: the root midi key, the midi key for which the sample plays at normal speed
+ * @param[in] pitch_correction: pitch correction of the sample in percent
+ * @param[in] sample_rate: sample_rate at which the sample plays
+ */
 void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
 				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate)
 {
-	uint32_t dir_offset = sdtalist_chunk->smpl_subchunk.add_sample(file, type, pointer, size, loop_flag, loop_pos);
+	uint32_t dir_offset = sdtalist_chunk->smpl_subchunk.add_sample(file, type, pointer, size, loop_flag, loop_start);
 	// If the sample is looped const SF2 standard requires we add the 8 bytes
 	// at the start of the loop at the end (what a dumb standard)
 	uint32_t dir_end, dir_loop_end, dir_loop_start;
