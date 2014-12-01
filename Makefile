@@ -23,4 +23,4 @@ main.o: main.cpp
 	$(LD) main.o sf2.o midi.o -o asdf
 
 clean:
-	rm -f *.o *.s *.i *.ii
+	rm -f *.o *.s *.i *.ii asdf
