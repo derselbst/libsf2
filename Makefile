@@ -4,7 +4,7 @@ CPPC=g++ -std=gnu++11
 CC=gcc -std=c99
 
 # Parameters used for compilation
-FLAGS=-m32 -Wall -fdata-sections -ffunction-sections -Os -fmax-errors=5
+FLAGS=-Wall -fdata-sections -ffunction-sections -Os -fmax-errors=5
 # Additional parameters used for linking whole programs
 WHOLE=-s -fwhole-program -static
 
