@@ -136,7 +136,7 @@ void MIDI::add_event(MIDIEventType type, int chn, char param1, char param2)
 	{
 		last_chanel = chn;
 		last_event_type = type;
-		data.push_back((type << 4) | chn_reorder[chn]);
+		data.push_back((type << 4) | (chn_reorder[chn] & 0x0F));
 	}
 	data.push_back(param1);
 	data.push_back(param2);
@@ -149,7 +149,7 @@ void MIDI::add_event(MIDIEventType type, int chn, char param)
 	{
 		last_chanel = chn;
 		last_event_type = type;
-		data.push_back((type << 4) | chn_reorder[chn]);
+		data.push_back((type << 4) | (chn_reorder[chn] & 0x0F));
 	}
 	data.push_back(param);
 }
