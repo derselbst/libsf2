@@ -38,7 +38,7 @@ class MIDI
 	void add_event(MIDIEventType type, int chn, char param1);
 
 public:
-	char chn_reorder[16];			// User can change the order of the channels
+	uint8_t chn_reorder[16];			// User can change the order of the channels
 
 	MIDI(uint16_t delta_time);			// Construct a MIDI object
 	void write(FILE*);					// Write cached data to midi file
