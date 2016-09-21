@@ -18,7 +18,8 @@ typedef enum
 	UNSIGNED_8,
 	SIGNED_8,
 	SIGNED_16,
-	GAMEBOY_CH3
+	GAMEBOY_CH3,
+	BDPCM
 }
 SampleType;
 
@@ -61,9 +62,11 @@ public:
 	void add_new_inst_generator(SFGenerator operation, uint16_t value);
 	void add_new_inst_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
 	void add_new_sample_header(const char *name, int start, int end, int start_loop, int end_loop, int sample_rate, int original_pitch, int pitch_correction);
-	
-	void add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
-				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
+
+        void add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
+                                  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
+        void add_new_sample(void *mem, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
+                                  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
 
 	uint16_t get_ibag_size();
 	uint16_t get_igen_size();

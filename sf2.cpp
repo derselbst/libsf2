@@ -211,6 +211,31 @@ void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t
 	add_new_sample_header(name, dir_offset, dir_end, dir_loop_start, dir_loop_end, sample_rate, original_pitch, pitch_correction);
 }
 
+void SF2::add_new_sample(void *mem, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
+                                  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate)
+{
+        uint32_t dir_offset = sdtalist_chunk->smpl_subchunk.add_sample(mem, type, pointer, size, loop_flag, loop_start);
+        // If the sample is looped const SF2 standard requires we add the 8 bytes
+        // at the start of the loop at the end (what a dumb standard)
+        uint32_t dir_end, dir_loop_end, dir_loop_start;
+
+        if (loop_flag)
+        {
+                dir_end = dir_offset + size + 8;
+                dir_loop_end = dir_offset + loop_end;
+                dir_loop_start = dir_offset + loop_start;
+        }
+        else
+        {
+                dir_end = dir_offset + size;
+                dir_loop_end = 0;
+                dir_loop_start = 0;
+        }
+
+        // Create sample header and add it to the list
+        add_new_sample_header(name, dir_offset, dir_end, dir_loop_start, dir_loop_end, sample_rate, original_pitch, pitch_correction);
+}
+
 uint16_t SF2::get_ibag_size()
 {
 	return pdtalist_chunk->ibag_subchunk.bag_list.size();

@@ -295,8 +295,12 @@ class SMPLSubChunk : public SF2Chunks
 	// I made this function as generic as possible, so any sample can be loaded
 	// from any file, in various formats.
 
-	std::vector<FILE*> file_list;				// Files from which the samples must be read
-	std::vector<uint32_t> pointer_list;			// address within files where the samples must be read
+        // 2016-09-20: also be able to store pointers to blocks of memory
+
+        std::vector<FILE*> file_list;                           // Files from which the samples must be read
+        std::vector<void*> memory_list;                         // pointer to block of memory containing the samples
+        
+	std::vector<uint32_t> pointer_list;			// byte offset within files / block of memory where the samples must be read
 	std::vector<uint32_t> size_list;			// Size of the data sample
 	std::vector<bool> loop_flag_list;			// Loop flag for samples (required as we need to copy data after the loop)
 	std::vector<uint32_t> loop_pos_list;		// Loop start data (irrelevent if loop flag is clear - add dummy data)
@@ -311,25 +315,14 @@ public:
 	// Returns directory index of the start of the sample
 	uint32_t add_sample(FILE *file, SampleType type, uint32_t pointer, uint32_t size, bool loop_flag, uint32_t loop_pos)
 	{
-		file_list.push_back(file);
-		pointer_list.push_back(pointer);
-		size_list.push_back(size);
-		loop_flag_list.push_back(loop_flag);
-		loop_pos_list.push_back(loop_pos);
-		sample_type_list.push_back(type);
-
-		uint32_t dir_offset = SF2Chunks::size >> 1;
-		// 2 bytes per sample
-		// Compute size including the 8 samples after loop point
-		// and 46 dummy samples
-		if(loop_flag)
-			SF2Chunks::size += (size + 8 + 46) * 2;
-		else
-			SF2Chunks::size += (size + 46) * 2;
-
-		return dir_offset;
+		return this->add_sample(file, nullptr, type, pointer, size, loop_flag, loop_pos);
 	}
 
+	uint32_t add_sample(void *data, SampleType type, uint32_t offset, uint32_t size, bool loop_flag, uint32_t loop_pos)
+        {
+                return this->add_sample(nullptr, data, type, offset, size, loop_flag, loop_pos);
+        }
+        
 	// Write all samples to output in little Indian format
 	void write()
 	{
@@ -337,9 +330,19 @@ public:
 
 		for(unsigned int i=0; i<file_list.size(); i++)
 		{
-			// Seek at the start of the sample in input file
-			fseek(file_list[i], pointer_list[i], SEEK_SET);
+                        char* in_data_mem_block = nullptr;
 
+                        if(file_list[i] != nullptr)
+                        {
+                            // Seek at the start of the sample in input file
+                            fseek(file_list[i], pointer_list[i], SEEK_SET);
+                        }
+                        else
+                        {
+                          in_data_mem_block = static_cast<char*>(memory_list[i]);
+                          in_data_mem_block += pointer_list[i];
+                        }
+                        
 			// Using a cached buffer really speeds up the writing process a lot !!
 			int16_t *outbuf = new int16_t[size_list[i]];
 
@@ -348,34 +351,69 @@ public:
 				// Source is unsigned 8 bits
 				case UNSIGNED_8:
 				{
-					uint8_t *data = new uint8_t[size_list[i]];
-					fread(data, 1, size_list[i], file_list[i]);
+					uint8_t *data;
+                                        
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            data = new uint8_t[size_list[i]];
+                                            fread(data, 1, size_list[i], file_list[i]);
+                                        }
+                                        else
+                                        {
+                                            data = reinterpret_cast<uint8_t*>(in_data_mem_block);
+                                        }
+                                        
 					// Convert to signed 16 bits
 					for(unsigned int j=0; j < size_list[i]; j++)
 						outbuf[j] = (data[j] - 0x80) << 8;
-					delete[] data;
+                                        
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            delete[] data;
+                                        }
 				}	break;
 
 				// Source is signed 8 bits
 				case SIGNED_8:
 				{
-					int8_t *data = new int8_t[size_list[i]];
-					fread(data, 1, size_list[i], file_list[i]);
-
+					int8_t *data;
+                                        
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            data = new int8_t[size_list[i]];
+                                            fread(data, 1, size_list[i], file_list[i]);
+                                        }
+                                        else
+                                        {
+                                            data = reinterpret_cast<int8_t*>(in_data_mem_block);
+                                        }
+                                        
 					for(unsigned int j=0; j < size_list[i]; j++)
 						outbuf[j] = data[j] << 8;
-					delete[] data;
+                                        
+					if(file_list[i] != nullptr)
+                                        {
+                                            delete[] data;
+                                        }
 				}	break;
 
 				case SIGNED_16:
 					// Just read raw data, no conversion needed
-					fread(outbuf, 2, size_list[i], file_list[i]);
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            fread(outbuf, 2, size_list[i], file_list[i]);
+                                        }
+                                        else
+                                        {
+                                            memcpy(outbuf, in_data_mem_block, sizeof(int16_t) * size_list[i]);
+                                        }
+                                        
 					break;
 				
 				case GAMEBOY_CH3:
 				{
 					// Conversion lookup table
-					const int16_t conv_tbl[] =
+					static const int16_t conv_tbl[] =
 					{
 						-0x4000, -0x3800, -0x3000, -0x2800, -0x2000, -0x1800, -0x0100, -0x0800,
 						0x0000, 0x0800, 0x1000, 0x1800, 0x2000, 0x2800, 0x3000, 0x3800
@@ -384,7 +422,15 @@ public:
 					int num_of_repts = size_list[i]/32;
 					// Data is always on 16 bytes
 					uint8_t data[16];
-					fread(data, 1, 16, file_list[i]);
+                                        
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            fread(data, 1, 16, file_list[i]);
+                                        }
+                                        else
+                                        {
+                                            memcpy(data, in_data_mem_block, 16);
+                                        }
 
 					for(int j=0, l=0; j<16; j++)
 					{
@@ -395,6 +441,55 @@ public:
 							outbuf[l] = conv_tbl[data[j]&0xf];
 					}
 				}	break;
+				
+				case BDPCM:
+				{
+					static const int8_t delta_lut[] = {0, 1, 4, 9, 16, 25, 36, 49, -64, -49, -36, -25, -16, -9, -4, -1};
+
+					/*
+					 * A block consists of an initial signed 8 bit PCM byte
+					 * followed by 63 nibbles stored in 32 bytes.
+					 * The first of these bytes has a zero padded (unused) high nibble.
+					 * This makes up of a total block size of 65 (0x21) bytes each.
+					 *
+					 * Decoding works like this:
+					 * The initial byte can be directly read without decoding. Then each
+					 * next sample can be decoded by putting the nibble into the delta-lookup-table 
+					 * and adding that value to the previously calculated sample
+					 * until the end of the block is reached.
+					 */
+
+					unsigned int nblocks = size_list[i] / 64;		// 64 samples per block
+
+					char (*data)[33] = new char[nblocks][33];
+                                        if(file_list[i] != nullptr)
+                                        {
+                                            fread(data, 33, nblocks, file_list[i]);
+                                        }
+                                        else
+                                        {
+                                            memcpy(data, in_data_mem_block, 33*nblocks);
+                                        }
+
+					for(unsigned int block=0; block < nblocks; ++block)
+					{
+						int8_t sample = data[block][0];
+						outbuf[64*block] = sample << 8;
+						sample += delta_lut[data[block][1] & 0xf];
+						outbuf[64*block+1] = sample << 8;
+						for (unsigned int j = 1; j < 32; ++j)
+						{
+							uint8_t d = data[block][j+1];
+							sample += delta_lut[d >> 4];
+							outbuf[64*block+2*j] = sample << 8;
+							sample += delta_lut[d & 0xf];
+							outbuf[64*block+2*j+1]= sample << 8;
+						}
+					}
+					memset(outbuf+64*nblocks, 0, size_list[i]-64*nblocks);		// Remaining samples are always 0
+
+					delete[] data;
+				}   break;
 			}
 
 			// Write buffer
@@ -413,6 +508,30 @@ public:
 			delete[] outbuf;
 		}
 	}
+
+private:
+        uint32_t add_sample(FILE* file, void *data, SampleType type, uint32_t offset, uint32_t size, bool loop_flag, uint32_t loop_pos)
+        {
+              file_list.push_back(file);
+              memory_list.push_back(data);
+              
+              pointer_list.push_back(offset);
+              size_list.push_back(size);
+              loop_flag_list.push_back(loop_flag);
+              loop_pos_list.push_back(loop_pos);
+              sample_type_list.push_back(type);
+
+              uint32_t dir_offset = SF2Chunks::size >> 1;
+              // 2 bytes per sample
+              // Compute size including the 8 samples after loop point
+              // and 46 dummy samples
+              if(loop_flag)
+                      SF2Chunks::size += (size + 8 + 46) * 2;
+              else
+                      SF2Chunks::size += (size + 46) * 2;
+
+              return dir_offset;
+        }
 };
 
 // Preset header list sub-chunk
@@ -476,12 +595,7 @@ class BAGSubChunk : public SF2Chunks
 public:
 	BAGSubChunk (SF2 *sf2, bool preset) :		// Init size and name
 		SF2Chunks(sf2, preset ? "pbag" : "ibag")
-	{
-		// if(preset)
-			// name = "pbag";
-		// else
-			// name = "ibag";
-	}
+	{}
 
 	// Add an existing bag to the list
 	void add_bag(const sfBag& bag)
@@ -646,8 +760,10 @@ class SdtaListChunk : public SF2Chunks
 {
 	SMPLSubChunk smpl_subchunk;
 
-	friend void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
-				  uint32_t loop_start, uint32_t loop_end, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
+        friend void SF2::add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
+                                  uint32_t loop_start, uint32_t loop_stop, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
+        friend void SF2::add_new_sample(void* mem, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
+                                  uint32_t loop_start, uint32_t loop_stop, uint32_t original_pitch, uint32_t pitch_correction, uint32_t sample_rate);
 public:
 	SdtaListChunk (SF2 *sf2) :
 		SF2Chunks(sf2, "LIST"),
