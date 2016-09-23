@@ -121,6 +121,12 @@ void SF2::add_new_preset_modulator()
     pdtalist_chunk->pmod_subchunk.add_modulator(sfModList(this));
 }
 
+//Add a new modulator to the list
+void SF2::add_new_preset_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper)
+{
+    pdtalist_chunk->pmod_subchunk.add_modulator(sfModList(this, srcMod, amtMod, modAmount, destGen, sfModTransOper));
+}
+
 //Add a new blank generator to the list
 void SF2::add_new_preset_generator()
 {
@@ -143,6 +149,12 @@ void SF2::add_new_preset_generator(SFGenerator operation, uint8_t lo, uint8_t hi
 void SF2::add_new_inst_modulator()
 {
     pdtalist_chunk->imod_subchunk.add_modulator(sfModList(this));
+}
+
+//Add a new modulator to the list
+void SF2::add_new_inst_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper)
+{
+    pdtalist_chunk->imod_subchunk.add_modulator(sfModList(this, srcMod, amtMod, modAmount, destGen, sfModTransOper));
 }
 
 //Add a new blank generator to the list

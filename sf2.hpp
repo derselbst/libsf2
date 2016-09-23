@@ -53,14 +53,19 @@ public:
     void add_new_instrument(const char *name);
     void add_new_inst_bag();
     void add_new_preset_bag();
+    
     void add_new_preset_modulator();
+    void add_new_preset_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper=SFTransform::linear);
     void add_new_preset_generator();
     void add_new_preset_generator(SFGenerator operation, uint16_t value);
     void add_new_preset_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
+    
     void add_new_inst_modulator();
+    void add_new_inst_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper=SFTransform::linear);
     void add_new_inst_generator();
     void add_new_inst_generator(SFGenerator operation, uint16_t value);
     void add_new_inst_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
+    
     void add_new_sample_header(const char *name, int start, int end, int start_loop, int end_loop, int sample_rate, int original_pitch, int pitch_correction);
 
     void add_new_sample(FILE *file, SampleType type, const char *name, uint32_t pointer, uint32_t size, bool loop_flag,
