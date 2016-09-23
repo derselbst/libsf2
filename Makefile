@@ -16,11 +16,11 @@ midi.o: midi.cpp midi.hpp
 	$(CPPC) $(FLAGS) -c midi.cpp -o midi.o
 
 sf2.o : sf2.cpp sf2.hpp sf2_types.hpp sf2_chunks.hpp
-	$(CPPC) $(FLAGS) -c sf2.cpp -o sf2.o
+	$(CPPC) $(FLAGS) -c sf2.cpp -o sf2.a
 
 main.o: main.cpp
 	$(CPPC) $(FLAGS) -c main.cpp -o main.o
-	$(LD) main.o sf2.o midi.o -o asdf
+	$(LD) main.o sf2.a midi.o -o asdf
 
 clean:
-	rm -f *.o *.s *.i *.ii asdf
+	rm -f sf2.a *.o *.s *.i *.ii asdf
