@@ -819,12 +819,12 @@ class HydraChunk : public SF2Chunks
     friend void SF2::add_new_inst_bag();
     friend void SF2::add_new_preset_bag();
     friend void SF2::add_new_preset_modulator();
-    friend void SF2::add_new_preset_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper=SFTransform::linear);
+    friend void SF2::add_new_preset_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper);
     friend void SF2::add_new_preset_generator();
     friend void SF2::add_new_preset_generator(SFGenerator operation, uint16_t value);
     friend void SF2::add_new_preset_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
     friend void SF2::add_new_inst_modulator();
-    friend void SF2::add_new_inst_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper=SFTransform::linear);
+    friend void SF2::add_new_inst_modulator(SFModulator srcMod, SFModulator amtMod, uint16_t modAmount, SFGenerator destGen, SFTransform sfModTransOper);
     friend void SF2::add_new_inst_generator();
     friend void SF2::add_new_inst_generator(SFGenerator operation, uint16_t value);
     friend void SF2::add_new_inst_generator(SFGenerator operation, uint8_t lo, uint8_t hi);
